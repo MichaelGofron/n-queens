@@ -79,29 +79,26 @@
     //
     // test if a specific row on this board contains a conflict
     hasRowConflictAt: function(rowIndex) {
-      // look at all the spots in the rowIndex. If there is more than one one then it has a conflict
-      var row = this.attributes[rowIndex];
-      var itemInRow = false;
-      for (var i = 0; i < this.attributes.n; i++){
-        if (row[i] === 1){
-          if (itemInRow){
-            return true;
-          }else{
-            itemInRow = true;
-          }
+
+      var count = 0;
+      this.rows()[rowIndex].forEach(function(hasQueen) {
+        if (hasQueen) {
+          count++;
         }
-      }
-      return false; 
+      });
+      return count > 1;
     },
 
     // test if any rows on this board contain conflicts
     hasAnyRowConflicts: function() {
-      for (var i = 0; i < this.attributes.n; i++){
-        if (this.hasRowConflictAt(i)){
+      var rows = this.rows();
+      var conflict = false;
+      for (var i = 0; i < rows.length; i++) {
+        if (this.hasRowConflictAt(i)) {
           return true;
         }
       }
-      return false; 
+      return false;
     },
 
 
@@ -111,28 +108,26 @@
     //
     // test if a specific column on this board contains a conflict
     hasColConflictAt: function(colIndex) {
-      var itemInCol = false;
-      for (var i = 0; i < this.attributes.n; i++){
-        var columnCell = this.attributes[i][colIndex];
-        if (columnCell === 1){
-          if (itemInCol){
-            return true;;
-          }else{
-            itemInCol = true;
-          }
+      var count = 0;
+      var rows = this.rows();
+      for (var i = 0; i < rows.length; i++) {
+        if (rows[i][colIndex]) {
+          count++;
         }
       }
-      return false; // fixme
+      return count > 1;
     },
 
     // test if any columns on this board contain conflicts
     hasAnyColConflicts: function() {
-      for (var i = 0; i < this.attributes.n; i++){
-        if (this.hasColConflictAt(i)){
+      var rows = this.rows();
+      var conflict = false;
+      for (var i = 0; i < rows.length; i++) {
+        if (this.hasColConflictAt(i)) {
           return true;
         }
       }
-      return false; // fixme
+      return false;
     },
 
 
@@ -142,30 +137,43 @@
     //
     // test first if value at that index then continue
     hasMajorDiagonalConflictAt: function(majorDiagonalColumnIndexAtFirstRow) {
-      var itemInDiag = false;
-      var i = 0;
-      var j = majorDiagonalColumnIndexAtFirstRow;
-      for (i,j; i < this.attributes.n; i++,j++){
-        var row = this.attributes[i];
-        if (row[j] === 1){
-          if (itemInDiag){
-            return true;
-          }else{
-            itemInDiag = true;
+      var rows = this.rows();
+      var x;
+      var y;
+      var count = 0;
+      if (majorDiagonalColumnIndexAtFirstRow < 0) {
+        x = 0;
+        y = 0 - majorDiagonalColumnIndexAtFirstRow;
+        while (y < rows.length) {
+          if (rows[y][x]) {
+            count++;
           }
+          x++;
+          y++;
+        }
+      } else {
+        x = majorDiagonalColumnIndexAtFirstRow;
+        y = 0;
+        while (x < rows.length) {
+          if (rows[y][x]) {
+            count++;
+          }
+          x++;
+          y++;
         }
       }
-      return false; // fixme
+      return count > 1;
     },
 
     // test if any major diagonals on this board contain conflicts
     hasAnyMajorDiagonalConflicts: function() {
-      for (var i = 0; i < this.attributes.n; i++){
-        if (this.hasMajorDiagonalConflictAt(i)){
+      var rows = this.rows();
+      for (var i = 2 - rows.length; i < rows.length - 1; i ++) {
+        if (this.hasMajorDiagonalConflictAt(i)) {
           return true;
         }
       }
-      return false; // fixme
+      return false;
     },
 
 
@@ -175,66 +183,43 @@
     //
     // test if a specific minor diagonal on this board contains a conflict
     hasMinorDiagonalConflictAt: function(minorDiagonalColumnIndexAtFirstRow) {
-      var itemInDiag = false;
-      var i = 0;
-      var j = minorDiagonalColumnIndexAtFirstRow;
-      for (i,j; (i < this.attributes.n || j >= 0); i++, j--){
-        var row = this.attributes[i];
-        if (row[j] === 1){
-          if (itemInDiag){
-            return true;
-          }else{
-            itemInDiag = true;
+      var rows = this.rows();
+      var x;
+      var y;
+      var count = 0;
+      if (minorDiagonalColumnIndexAtFirstRow > rows.length - 1) {
+        x = rows.length - 1;
+        y = minorDiagonalColumnIndexAtFirstRow - rows.length + 1;
+        while (y < rows.length) {
+          if (rows[y][x]) {
+            count++;
           }
+          x--;
+          y++;
+        }
+      } else {
+        x = minorDiagonalColumnIndexAtFirstRow;
+        y = 0;
+        while (x >= 0) {
+          if (rows[y][x]) {
+            count++;
+          }
+          x--;
+          y++;
         }
       }
-      return false; // fixme
+      return count > 1;
     },
 
     // test if any minor diagonals on this board contain conflicts
     hasAnyMinorDiagonalConflicts: function() {
-      for (var i = 0; i < this.attributes.n; i++){
-        if (this.hasMinorDiagonalConflictAt(i)){
+      var rows = this.rows();
+      for (var i = 1; i < 2 * rows.length - 3; i ++) {
+        if (this.hasMinorDiagonalConflictAt(i)) {
           return true;
         }
       }
-      return false; // fixme
-    },
-
-    // assume takes a rook only
-    insertPieceIntoBoard: function(){
-      // must see what constraints are in the board
-      // then when we have an array of locations we can insert into,
-      // choose a random element and continue inserting pieces into the board
-
-      // check if all values are 0
-      var self = this;
-      var initialInsert = _.every(_.flatten(this.attributes.slice(0,self.attributes.length-1)),function(el){return el === 0});
-      if (initialInsert === 0){
-        this.attributes[0][0] = 1;
-      }
-
-      //check if the n matches, if so don't check or insert anymore
-      var indices = this.checkPieceInBoard();
-
-    },
-
-    // must find what positions are now available
-    // check the attributes which now have a 1
-    // return all positions that have no col and row index
-    // pass each row and column index to each
-    // if there's no row or col problem, push into the array
-    // available positions are then returned
-    possiblePositions: function(){
-      var allPositions = this.attributes.slice(0,self.attributes.length-1);
-
-      // go through all positions and check if the n matches
-      _.each(allPositions, function(row, rowNum){
-        _.each(row, function(cellOccupied, colNum){
-          // can't reaach n, that's fine actually
-          if (hasRowConflictAt)
-        });
-      });
+      return false;
     }
 
     /*--------------------  End of Helper Functions  ---------------------*/
